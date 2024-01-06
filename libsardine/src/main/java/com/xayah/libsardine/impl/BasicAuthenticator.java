@@ -1,5 +1,7 @@
 package com.xayah.libsardine.impl;
 
+import com.xayah.libsardine.util.SardineUtil;
+
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
 import okhttp3.Request;
@@ -27,7 +29,7 @@ class BasicAuthenticator implements Authenticator {
 
         System.out.println("Authenticating for response: " + response);
         System.out.println("Challenges: " + response.challenges());
-        String credential = Credentials.basic(userName, password);
+        String credential = Credentials.basic(userName, password, SardineUtil.standardUTF8());
         return response.request().newBuilder()
                 .header("Authorization", credential)
                 .build();
