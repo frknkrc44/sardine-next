@@ -21,12 +21,10 @@
 #-renamesourcefileattribute SourceFile
 
 ## SimpleXml
--dontwarn org.simpleframework.xml.stream.**
--keep class org.simpleframework.xml.**{ *; }
--keepclassmembers,allowobfuscation class * {
-    @org.simpleframework.xml.* <fields>;
-    @org.simpleframework.xml.* <init>(...);
-}
+-dontwarn org.simpleframework.xml.**
+-dontwarn javax.xml.stream.**
+-keep class org.simpleframework.xml.** { *; }
+-keep class javax.xml.stream.** { *; }
 
 ## Sardine Android model classes: needed for XML serialization
 -keep class com.xayah.libsardine.model.**{ *; }
