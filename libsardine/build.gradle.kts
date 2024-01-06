@@ -39,3 +39,23 @@ dependencies {
         exclude(module = "xpp3")
     }
 }
+
+android {
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                groupId = "com.github.xayahsususu"
+            }
+        }
+    }
+}
