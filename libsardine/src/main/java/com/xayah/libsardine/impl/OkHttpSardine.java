@@ -402,12 +402,24 @@ public class OkHttpSardine implements Sardine {
 
     @Override
     public boolean exists(String url) throws IOException {
-        Request request = new Request.Builder()
-                .url(url)
-                .method("HEAD", null)
-                .build();
-
-        return execute(request, new ExistsResponseHandler());
+        boolean result;
+        try {
+            Request request = new Request.Builder()
+                    .url(url)
+                    .method("HEAD", null)
+                    .build();
+            result = execute(request, new ExistsResponseHandler());
+        } catch (SardineException e) {
+            if (e.getStatusCode() == 405) {
+                Request request = new Request.Builder()
+                        .url(url)
+                        .header("Depth", "0")
+                        .method("PROPFIND", null)
+                        .build();
+                result = execute(request, new ExistsResponseHandler());
+            } else throw e;
+        }
+        return result;
     }
 
     @Override
