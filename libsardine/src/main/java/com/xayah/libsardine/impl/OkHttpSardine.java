@@ -15,6 +15,8 @@ import com.xayah.libsardine.impl.handler.MultiStatusResponseHandler;
 import com.xayah.libsardine.impl.handler.ResourcesResponseHandler;
 import com.xayah.libsardine.impl.handler.ResponseHandler;
 import com.xayah.libsardine.impl.handler.VoidResponseHandler;
+import com.xayah.libsardine.io.CountingListener;
+import com.xayah.libsardine.io.CountingRequestBody;
 import com.xayah.libsardine.model.Ace;
 import com.xayah.libsardine.model.Acl;
 import com.xayah.libsardine.model.Allprop;
@@ -285,30 +287,30 @@ public class OkHttpSardine implements Sardine {
     }
 
     @Override
-    public void put(String url, byte[] data) throws IOException {
-        this.put(url, data, null);
+    public void put(String url, byte[] data, CountingListener countingListener) throws IOException {
+        this.put(url, data, null, countingListener);
     }
 
     @Override
-    public void put(String url, byte[] data, String contentType) throws IOException {
+    public void put(String url, byte[] data, String contentType, CountingListener countingListener) throws IOException {
         MediaType mediaType = contentType == null ? null : MediaType.parse(contentType);
         RequestBody requestBody = RequestBody.create(mediaType, data);
-        put(url, requestBody);
+        put(url, requestBody, countingListener);
     }
 
     @Override
-    public void put(String url, File localFile, String contentType) throws IOException {
+    public void put(String url, File localFile, String contentType, CountingListener countingListener) throws IOException {
         //don't use ExpectContinue for repetable FileEntity, some web server (IIS for exmaple) may return 400 bad request after retry
-        put(url, localFile, contentType, false);
+        put(url, localFile, contentType, false, countingListener);
     }
 
     @Override
-    public void put(String url, File localFile, String contentType, boolean expectContinue) throws IOException {
-        put(url, localFile, contentType, expectContinue, null);
+    public void put(String url, File localFile, String contentType, boolean expectContinue, CountingListener countingListener) throws IOException {
+        put(url, localFile, contentType, expectContinue, null, countingListener);
     }
 
     @Override
-    public void put(String url, File localFile, String contentType, boolean expectContinue, String lockToken) throws IOException {
+    public void put(String url, File localFile, String contentType, boolean expectContinue, String lockToken, CountingListener countingListener) throws IOException {
         MediaType mediaType = contentType == null ? null : MediaType.parse(contentType);
         RequestBody requestBody = RequestBody.create(mediaType, localFile);
         Headers.Builder headersBuilder = new Headers.Builder();
@@ -318,17 +320,21 @@ public class OkHttpSardine implements Sardine {
         if (!TextUtils.isEmpty(lockToken)) {
             addLockTokenToHeaders(headersBuilder, url, lockToken);
         }
-        put(url, requestBody, headersBuilder.build());
+        put(url, requestBody, headersBuilder.build(), countingListener);
     }
 
-    private void put(String url, RequestBody requestBody) throws IOException {
-        put(url, requestBody, new Headers.Builder().build());
+    private void put(String url, RequestBody requestBody, CountingListener countingListener) throws IOException {
+        put(url, requestBody, new Headers.Builder().build(), countingListener);
     }
 
-    private void put(String url, RequestBody requestBody, Headers headers) throws IOException {
+    private void put(String url, RequestBody requestBody, Headers headers, CountingListener countingListener) throws IOException {
+        CountingRequestBody countingRequestBody = null;
+        if (countingListener != null) {
+            countingRequestBody = new CountingRequestBody(requestBody, countingListener);
+        }
         Request request = new Request.Builder()
                 .url(url)
-                .put(requestBody)
+                .put(countingRequestBody == null ? requestBody : countingRequestBody)
                 .headers(headers)
                 .build();
         execute(request);
@@ -618,6 +624,7 @@ public class OkHttpSardine implements Sardine {
     public void ignoreCookies() {
         throw new UnsupportedOperationException();
     }
+
     private void execute(Request request) throws IOException {
         execute(request, new VoidResponseHandler());
     }

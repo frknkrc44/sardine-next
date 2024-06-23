@@ -1,5 +1,6 @@
 package com.xayah.libsardine;
 
+import com.xayah.libsardine.io.CountingListener;
 import com.xayah.libsardine.report.SardineReport;
 
 import org.w3c.dom.Element;
@@ -182,9 +183,10 @@ public interface Sardine
 	 *
 	 * @param url  Path to the resource including protocol and hostname
 	 * @param data Input source
+	 * @param countingListener Progress listener, nullable
 	 * @throws IOException I/O error or HTTP response validation failure
 	 */
-	void put(String url, byte[] data) throws IOException;
+	void put(String url, byte[] data, CountingListener countingListener) throws IOException;
 
 	/**
 	 * Uses <code>PUT</code> to send data to a server. Not repeatable on authentication failure.
@@ -206,9 +208,10 @@ public interface Sardine
 	 * @param url		 Path to the resource including protocol and hostname
 	 * @param data		Input source
 	 * @param contentType MIME type to add to the HTTP request header
+	 * @param countingListener Progress listener, nullable
 	 * @throws IOException I/O error or HTTP response validation failure
 	 */
-	void put(String url, byte[] data, String contentType) throws IOException;
+	void put(String url, byte[] data, String contentType, CountingListener countingListener) throws IOException;
 
 	/**
 	 * Uses <code>PUT</code> to send data to a server with a specific content
@@ -264,9 +267,10 @@ public interface Sardine
 	 * @param url		Path to the resource including protocol and hostname
 	 * @param localFile local file to send
 	 * @param contentType	MIME type to add to the HTTP request header
+	 * @param countingListener Progress listener, nullable
 	 * @throws IOException I/O error or HTTP response validation failure
 	 */
-	void put(String url, File localFile, String contentType) throws IOException;
+	void put(String url, File localFile, String contentType, CountingListener countingListener) throws IOException;
 
 	/**
 	 * Uses <code>PUT</code> to upload file to a server with specific contentType.
@@ -276,9 +280,10 @@ public interface Sardine
 	 * @param localFile local file to send
 	 * @param contentType   MIME type to add to the HTTP request header
 	 * @param expectContinue Enable <code>Expect: continue</code> header for <code>PUT</code> requests.
+	 * @param countingListener Progress listener, nullable
 	 * @throws IOException I/O error or HTTP response validation failure
 	 */
-	void put(String url, File localFile, String contentType, boolean expectContinue) throws IOException;
+	void put(String url, File localFile, String contentType, boolean expectContinue, CountingListener countingListener) throws IOException;
 
 
 	/**
@@ -290,9 +295,10 @@ public interface Sardine
 	 * @param contentType	MIME type to add to the HTTP request header
 	 * @param expectContinue Enable <code>Expect: continue</code> header for <code>PUT</code> requests.
 	 * @param lockToken A lock token is a type of state token that identifies a particular lock.
+	 * @param countingListener Progress listener, nullable
 	 * @throws IOException I/O error or HTTP response validation failure
 	 */
-	void put(String url, File localFile, String contentType, boolean expectContinue, String lockToken) throws IOException;
+	void put(String url, File localFile, String contentType, boolean expectContinue, String lockToken, CountingListener countingListener) throws IOException;
 
 	/**
 	 * Delete a resource using HTTP <code>DELETE</code> at the specified url
