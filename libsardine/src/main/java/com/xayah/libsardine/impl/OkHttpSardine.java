@@ -65,16 +65,23 @@ import okhttp3.Response;
  * Created by guillaume on 08/11/2017.
  */
 
+@SuppressWarnings("unused")
 public class OkHttpSardine implements Sardine {
 
     private OkHttpClient client;
 
+    private CountingRequestBody.OnWriteListener onCountingWriteListener;
+
     public OkHttpSardine() {
-        this.client = new OkHttpClient.Builder().build();
+        this(new OkHttpClient.Builder().build());
     }
 
     public OkHttpSardine(OkHttpClient client) {
         this.client = client;
+    }
+
+    public void setOnCountingWriteListener(CountingRequestBody.OnWriteListener listener) {
+        onCountingWriteListener = listener;
     }
 
     @Override
@@ -326,6 +333,9 @@ public class OkHttpSardine implements Sardine {
     }
 
     private void put(String url, RequestBody requestBody, Headers headers) throws IOException {
+        if (onCountingWriteListener != null) {
+            requestBody = new CountingRequestBody(requestBody, onCountingWriteListener);
+        }
         Request request = new Request.Builder()
                 .url(url)
                 .put(requestBody)
