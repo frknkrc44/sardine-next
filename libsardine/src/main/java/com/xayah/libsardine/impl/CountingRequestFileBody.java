@@ -4,14 +4,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
-import okhttp3.internal.Util;
 import okio.BufferedSink;
-import okio.Okio;
-import okio.Source;
 
 public class CountingRequestFileBody extends RequestBody {
     private static final int BUFFER_SIZE = 128 * 1024;
@@ -40,19 +38,23 @@ public class CountingRequestFileBody extends RequestBody {
 
     @Override
     public void writeTo(@NotNull BufferedSink bufferedSink) throws IOException {
-        Source source = null;
+        FileInputStream inputStream = null;
         try {
-            source = Okio.source(file);
-            long read;
+            inputStream = new FileInputStream(file);
+            byte[] chunk = new byte[BUFFER_SIZE];
+            int read;
 
-            while ((read = source.read(bufferedSink.getBuffer(), BUFFER_SIZE)) >= 0) {
+            while ((read = inputStream.read(chunk, 0, BUFFER_SIZE)) > 0) {
                 totalWrite += read;
+                bufferedSink.write(chunk, 0, read);
                 bufferedSink.flush();
                 onWriteListener.onWrite(totalWrite, contentLength());
             }
         } finally {
-            if (source != null) {
-                Util.closeQuietly(source);
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (Throwable ignored) {}
             }
         }
     }
