@@ -70,7 +70,7 @@ public class OkHttpSardine implements Sardine {
 
     private OkHttpClient client;
 
-    private CountingRequestBody.OnWriteListener onCountingWriteListener;
+    private CountingRequestFileBody.OnWriteListener onCountingWriteListener;
 
     public OkHttpSardine() {
         this(new OkHttpClient.Builder().build());
@@ -80,7 +80,7 @@ public class OkHttpSardine implements Sardine {
         this.client = client;
     }
 
-    public void setOnCountingWriteListener(CountingRequestBody.OnWriteListener listener) {
+    public void setOnCountingWriteListener(CountingRequestFileBody.OnWriteListener listener) {
         onCountingWriteListener = listener;
     }
 
@@ -299,7 +299,14 @@ public class OkHttpSardine implements Sardine {
     @Override
     public void put(String url, byte[] data, String contentType) throws IOException {
         MediaType mediaType = contentType == null ? null : MediaType.parse(contentType);
-        RequestBody requestBody = RequestBody.create(mediaType, data);
+        RequestBody requestBody;
+
+        if (onCountingWriteListener != null) {
+            requestBody = new CountingRequestByteArrayBody(data, onCountingWriteListener, mediaType);
+        } else {
+            requestBody = RequestBody.create(mediaType, data);
+        }
+
         put(url, requestBody);
     }
 
@@ -317,7 +324,14 @@ public class OkHttpSardine implements Sardine {
     @Override
     public void put(String url, File localFile, String contentType, boolean expectContinue, String lockToken) throws IOException {
         MediaType mediaType = contentType == null ? null : MediaType.parse(contentType);
-        RequestBody requestBody = RequestBody.create(mediaType, localFile);
+        RequestBody requestBody;
+
+        if (onCountingWriteListener != null) {
+            requestBody = new CountingRequestFileBody(localFile, onCountingWriteListener, mediaType);
+        } else {
+            requestBody = RequestBody.create(mediaType, localFile);
+        }
+
         Headers.Builder headersBuilder = new Headers.Builder();
         if (expectContinue) {
             headersBuilder.add("Expect", "100-Continue");
@@ -333,9 +347,6 @@ public class OkHttpSardine implements Sardine {
     }
 
     private void put(String url, RequestBody requestBody, Headers headers) throws IOException {
-        if (onCountingWriteListener != null) {
-            requestBody = new CountingRequestBody(requestBody, onCountingWriteListener);
-        }
         Request request = new Request.Builder()
                 .url(url)
                 .put(requestBody)
@@ -634,13 +645,6 @@ public class OkHttpSardine implements Sardine {
 
     private <T> T execute(Request request, ResponseHandler<T> responseHandler) throws IOException {
         OkHttpClient currentClient = client;
-
-        if (onCountingWriteListener != null) {
-            OkHttpClient.Builder newBuilder = client.newBuilder();
-            newBuilder.setSocketFactory$okhttp(new CountingSocketFactory());
-            currentClient = newBuilder.build();
-        }
-
         Response response = currentClient.newCall(request).execute();
         return responseHandler.handleResponse(response);
     }
