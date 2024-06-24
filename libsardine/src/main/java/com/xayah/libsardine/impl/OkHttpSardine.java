@@ -633,7 +633,15 @@ public class OkHttpSardine implements Sardine {
     }
 
     private <T> T execute(Request request, ResponseHandler<T> responseHandler) throws IOException {
-        Response response = client.newCall(request).execute();
+        OkHttpClient currentClient = client;
+
+        if (onCountingWriteListener != null) {
+            OkHttpClient.Builder newBuilder = client.newBuilder();
+            newBuilder.setSocketFactory$okhttp(new CountingSocketFactory());
+            currentClient = newBuilder.build();
+        }
+
+        Response response = currentClient.newCall(request).execute();
         return responseHandler.handleResponse(response);
     }
 
