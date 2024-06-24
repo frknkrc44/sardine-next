@@ -8,10 +8,12 @@ import java.io.IOException;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okio.BufferedSink;
+import okio.Okio;
 
 public class CountingRequestBody extends RequestBody {
     private final RequestBody delegate;
     private final OnWriteListener onWriteListener;
+    private long totalWrite = 0;
 
     public CountingRequestBody(RequestBody delegate, OnWriteListener onWriteListener) {
         this.delegate = delegate;
@@ -26,9 +28,17 @@ public class CountingRequestBody extends RequestBody {
 
     @Override
     public void writeTo(@NotNull BufferedSink bufferedSink) throws IOException {
-        long size = bufferedSink.getBuffer().size();
-        delegate.writeTo(bufferedSink);
-        onWriteListener.onWrite(size, contentLength());
+        long contentLength = contentLength();
+        CountingRequestStream countingRequestStream = new CountingRequestStream(
+                bufferedSink.outputStream(),
+                (value, max) -> {
+                    totalWrite += value;
+                    onWriteListener.onWrite(totalWrite, contentLength);
+                }
+        );
+        BufferedSink progressSink = Okio.buffer(Okio.sink(countingRequestStream));
+        delegate.writeTo(progressSink);
+        progressSink.flush();
     }
 
     public interface OnWriteListener {
