@@ -13,17 +13,17 @@ import okhttp3.RequestBody;
 import okio.BufferedSink;
 
 public class CountingRequestByteArrayBody extends RequestBody {
-    private static final int BUFFER_SIZE = 128 * 1024;
-
     private final byte[] array;
     private final OnWriteListener onWriteListener;
     private final MediaType contentType;
     private long totalWrite = 0;
+    private final int bufferSize;
 
-    public CountingRequestByteArrayBody(byte[] array, OnWriteListener onWriteListener, MediaType contentType) {
+    public CountingRequestByteArrayBody(byte[] array, OnWriteListener onWriteListener, MediaType contentType, int bufferSize) {
         this.array = array;
         this.onWriteListener = onWriteListener;
         this.contentType = contentType;
+        this.bufferSize = bufferSize;
     }
 
     @Override
@@ -42,10 +42,10 @@ public class CountingRequestByteArrayBody extends RequestBody {
         ByteArrayInputStream inputStream = null;
         try {
             inputStream = new ByteArrayInputStream(array);
-            byte[] chunk = new byte[BUFFER_SIZE];
+            byte[] chunk = new byte[bufferSize];
             int read;
 
-            while ((read = inputStream.read(chunk, 0, BUFFER_SIZE)) > 0) {
+            while ((read = inputStream.read(chunk, 0, bufferSize)) > 0) {
                 totalWrite += read;
                 bufferedSink.write(chunk, 0, read);
                 bufferedSink.flush();

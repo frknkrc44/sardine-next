@@ -71,6 +71,7 @@ public class OkHttpSardine implements Sardine {
     private OkHttpClient client;
 
     private CountingRequestFileBody.OnWriteListener onCountingWriteListener;
+    private int countingBufferSize = 0;
 
     public OkHttpSardine() {
         this(new OkHttpClient.Builder().build());
@@ -80,7 +81,8 @@ public class OkHttpSardine implements Sardine {
         this.client = client;
     }
 
-    public void setOnCountingWriteListener(CountingRequestFileBody.OnWriteListener listener) {
+    public void setOnCountingWriteListener(CountingRequestFileBody.OnWriteListener listener, int countingBufferSize) {
+        this.countingBufferSize = countingBufferSize;
         onCountingWriteListener = listener;
     }
 
@@ -302,7 +304,7 @@ public class OkHttpSardine implements Sardine {
         RequestBody requestBody;
 
         if (onCountingWriteListener != null) {
-            requestBody = new CountingRequestByteArrayBody(data, onCountingWriteListener, mediaType);
+            requestBody = new CountingRequestByteArrayBody(data, onCountingWriteListener, mediaType, countingBufferSize);
         } else {
             requestBody = RequestBody.create(mediaType, data);
         }
@@ -327,7 +329,7 @@ public class OkHttpSardine implements Sardine {
         RequestBody requestBody;
 
         if (onCountingWriteListener != null) {
-            requestBody = new CountingRequestFileBody(localFile, onCountingWriteListener, mediaType);
+            requestBody = new CountingRequestFileBody(localFile, onCountingWriteListener, mediaType, countingBufferSize);
         } else {
             requestBody = RequestBody.create(mediaType, localFile);
         }
